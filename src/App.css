@@ -1,0 +1,199 @@
+.desktop-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(56, 189, 248, 0.2), transparent 40%),
+    radial-gradient(circle at 85% 12%, rgba(251, 113, 133, 0.2), transparent 42%),
+    radial-gradient(circle at 10% 90%, rgba(129, 140, 248, 0.16), transparent 35%),
+    linear-gradient(150deg, #0b1222 0%, #101a31 55%, #11192b 100%);
+  color: #e8f2ff;
+}
+
+.desktop-watermark {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.desktop-watermark h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+}
+
+.desktop-watermark p {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: rgba(225, 237, 255, 0.75);
+}
+
+.window-frame {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: rgba(20, 26, 40, 0.92);
+  border: 1px solid rgba(144, 174, 215, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 18px 35px rgba(3, 10, 22, 0.5);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.window-frame.is-maximized {
+  border-radius: 0;
+}
+
+.window-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  cursor: grab;
+  user-select: none;
+  background: linear-gradient(180deg, rgba(48, 65, 101, 0.65), rgba(32, 45, 68, 0.8));
+  border-bottom: 1px solid rgba(154, 181, 219, 0.28);
+}
+
+.window-titlebar:active {
+  cursor: grabbing;
+}
+
+.window-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ebf3ff;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.window-controls {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.window-controls button {
+  width: 26px;
+  height: 24px;
+  border: 1px solid rgba(210, 226, 255, 0.25);
+  border-radius: 7px;
+  color: #f5f9ff;
+  background: rgba(118, 146, 188, 0.2);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.window-controls button:hover {
+  background: rgba(139, 172, 220, 0.3);
+}
+
+.window-controls button.danger:hover {
+  background: rgba(248, 113, 113, 0.45);
+  border-color: rgba(254, 202, 202, 0.5);
+}
+
+.window-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+  color: #dce7f7;
+}
+
+.window-content h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.window-content ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
+.window-content p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.window-content textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: none;
+  border-radius: 10px;
+  border: 1px solid rgba(163, 193, 237, 0.35);
+  background: rgba(9, 15, 29, 0.7);
+  color: #ecf5ff;
+  padding: 10px;
+  box-sizing: border-box;
+  font: inherit;
+}
+
+.window-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 45%,
+    rgba(196, 220, 255, 0.7) 45%,
+    rgba(196, 220, 255, 0.7) 56%,
+    transparent 56%
+  );
+}
+
+.empty-state {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(18, 25, 40, 0.7);
+  border: 1px solid rgba(144, 174, 215, 0.35);
+  border-radius: 14px;
+  padding: 20px;
+  width: min(420px, calc(100% - 40px));
+  text-align: center;
+}
+
+.empty-state h2 {
+  margin: 0 0 8px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: rgba(230, 239, 255, 0.8);
+}
+
+.window-shelf {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  z-index: 9999;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.shelf-item {
+  border: 1px solid rgba(156, 180, 218, 0.45);
+  background: rgba(26, 37, 59, 0.88);
+  color: #ebf3ff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.shelf-item:hover {
+  background: rgba(46, 64, 99, 0.9);
+}
