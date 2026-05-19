@@ -8,12 +8,12 @@
 
 **Goal:** A functional desktop environment with window management and app launcher.
 
-- [ ] **Window Manager** — draggable, resizable windows with minimize/maximize/close controls
-- [ ] **Taskbar / Dock** — pinned and running app indicators, window thumbnails
-- [ ] **App Launcher / Start Menu** — searchable app grid with categories
-- [ ] **Desktop** — wallpaper, icons, right-click context menu
-- [ ] **Multi-workspace support** — virtual desktops with switchable contexts
-- [ ] **PWA shell** — `manifest.json` + Service Worker for installability and offline shell
+- [x] **Window Manager** — draggable, resizable windows with minimize/maximize/close controls
+- [x] **Taskbar / Dock** — pinned and running app indicators, window thumbnails
+- [x] **App Launcher / Start Menu** — searchable app grid with categories
+- [x] **Desktop** — wallpaper, icons, right-click context menu
+- [x] **Multi-workspace support** — virtual desktops with switchable contexts
+- [x] **PWA shell** — `manifest.json` + Service Worker for installability and offline shell
 
 **Tech:** React / Vue 3, TypeScript, Vite, Zustand (state), Tailwind CSS, CSS Modules
 

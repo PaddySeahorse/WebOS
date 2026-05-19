@@ -1,19 +1,54 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import type { AppWindow, DesktopBounds } from './store/windowManagerStore'
-import { useWindowManagerStore } from './store/windowManagerStore'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
+import type { AppDefinition, AppId, AppWindow, DesktopBounds } from './store/windowManagerStore'
+import {
+  APP_DEFINITIONS,
+  WALLPAPER_OPTIONS,
+  useWindowManagerStore,
+} from './store/windowManagerStore'
 import './App.css'
 
 const MIN_DESKTOP_BOUNDS: DesktopBounds = {
-  width: 800,
-  height: 520,
+  width: 960,
+  height: 640,
+}
+
+const TASKBAR_HEIGHT = 58
+const DESKTOP_ICON_APPS: AppId[] = ['welcome', 'notes', 'about', 'settings']
+
+interface ContextMenuState {
+  x: number
+  y: number
 }
 
 function App() {
   const desktopRef = useRef<HTMLDivElement>(null)
   const [desktopBounds, setDesktopBounds] = useState<DesktopBounds>(MIN_DESKTOP_BOUNDS)
+  const [launcherOpen, setLauncherOpen] = useState(false)
+  const [launcherQuery, setLauncherQuery] = useState('')
+  const [hoveredDockAppId, setHoveredDockAppId] = useState<AppId | null>(null)
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [clockLabel, setClockLabel] = useState(() =>
+    new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  )
 
-  const windows = useWindowManagerStore((state) => state.windows)
+  const workspaces = useWindowManagerStore((state) => state.workspaces)
+  const activeWorkspaceId = useWindowManagerStore((state) => state.activeWorkspaceId)
+  const pinnedAppIds = useWindowManagerStore((state) => state.pinnedAppIds)
+  const currentWallpaperId = useWindowManagerStore((state) => state.currentWallpaperId)
+
+  const openApp = useWindowManagerStore((state) => state.openApp)
+  const launchOrFocusApp = useWindowManagerStore((state) => state.launchOrFocusApp)
   const restoreWindow = useWindowManagerStore((state) => state.restoreWindow)
+  const focusWindow = useWindowManagerStore((state) => state.focusWindow)
+  const switchWorkspace = useWindowManagerStore((state) => state.switchWorkspace)
+  const setWallpaper = useWindowManagerStore((state) => state.setWallpaper)
 
   useEffect(() => {
     const measureDesktop = () => {
@@ -44,6 +79,61 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setClockLabel(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+    }, 15000)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [])
+
+  useEffect(() => {
+    const closeFloatingPanels = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null
+
+      if (!target) {
+        return
+      }
+
+      if (launcherOpen && !target.closest('.launcher-panel') && !target.closest('.start-button')) {
+        setLauncherOpen(false)
+      }
+
+      if (contextMenu && !target.closest('.desktop-context-menu')) {
+        setContextMenu(null)
+      }
+    }
+
+    window.addEventListener('pointerdown', closeFloatingPanels)
+
+    return () => {
+      window.removeEventListener('pointerdown', closeFloatingPanels)
+    }
+  }, [launcherOpen, contextMenu])
+
+  const windowBounds = useMemo<DesktopBounds>(
+    () => ({
+      width: desktopBounds.width,
+      height: Math.max(420, desktopBounds.height - TASKBAR_HEIGHT - 10),
+    }),
+    [desktopBounds],
+  )
+
+  const activeWorkspace = useMemo(
+    () =>
+      workspaces.find((workspace) => workspace.id === activeWorkspaceId) ??
+      workspaces[0] ?? {
+        id: 'workspace-fallback',
+        name: 'Workspace',
+        windows: [],
+      },
+    [workspaces, activeWorkspaceId],
+  )
+
+  const windows = activeWorkspace.windows
+
   const visibleWindows = useMemo(
     () =>
       windows
@@ -52,40 +142,353 @@ function App() {
     [windows],
   )
 
-  const minimizedWindows = windows.filter((windowData) => windowData.minimized)
+  const runningWindowsByApp = useMemo(() => {
+    return windows.reduce<Record<AppId, AppWindow[]>>(
+      (lookup, windowData) => {
+        lookup[windowData.app].push(windowData)
+        return lookup
+      },
+      {
+        welcome: [],
+        notes: [],
+        about: [],
+        settings: [],
+      },
+    )
+  }, [windows])
+
+  const runningAppIds = useMemo(
+    () =>
+      Object.entries(runningWindowsByApp)
+        .filter(([, appWindows]) => appWindows.length > 0)
+        .map(([appId]) => appId as AppId),
+    [runningWindowsByApp],
+  )
+
+  const dockAppIds = useMemo(() => {
+    const all = [...pinnedAppIds, ...runningAppIds]
+    return all.filter((appId, index) => all.indexOf(appId) === index)
+  }, [pinnedAppIds, runningAppIds])
+
+  const wallpaper = WALLPAPER_OPTIONS.find((wallpaperOption) => wallpaperOption.id === currentWallpaperId)
+
+  const filteredApps = useMemo(() => {
+    const query = launcherQuery.trim().toLowerCase()
+
+    if (!query) {
+      return APP_DEFINITIONS
+    }
+
+    return APP_DEFINITIONS.filter((appDefinition) => {
+      const haystack = `${appDefinition.title} ${appDefinition.description} ${appDefinition.category}`.toLowerCase()
+      return haystack.includes(query)
+    })
+  }, [launcherQuery])
+
+  const groupedLauncherApps = useMemo(() => {
+    return filteredApps.reduce<Record<string, AppDefinition[]>>((groups, appDefinition) => {
+      if (!groups[appDefinition.category]) {
+        groups[appDefinition.category] = []
+      }
+      groups[appDefinition.category].push(appDefinition)
+      return groups
+    }, {})
+  }, [filteredApps])
+
+  const cycleWallpaper = () => {
+    const currentIndex = WALLPAPER_OPTIONS.findIndex(
+      (wallpaperOption) => wallpaperOption.id === currentWallpaperId,
+    )
+    const nextWallpaper = WALLPAPER_OPTIONS[(currentIndex + 1) % WALLPAPER_OPTIONS.length]
+    setWallpaper(nextWallpaper.id)
+  }
+
+  const launchFromLauncher = (appId: AppId) => {
+    launchOrFocusApp(appId, windowBounds)
+    setLauncherOpen(false)
+    setLauncherQuery('')
+  }
+
+  const launchFromDesktopIcon = (appId: AppId) => {
+    openApp(appId, windowBounds)
+    setContextMenu(null)
+  }
+
+  const handleDesktopContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement
+
+    if (
+      target.closest('.window-frame') ||
+      target.closest('.taskbar') ||
+      target.closest('.launcher-panel') ||
+      target.closest('.desktop-context-menu')
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    setLauncherOpen(false)
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+    })
+  }
 
   return (
-    <main className="desktop-shell" ref={desktopRef}>
+    <main
+      className="desktop-shell"
+      style={{ background: wallpaper?.background }}
+      ref={desktopRef}
+      onContextMenu={handleDesktopContextMenu}
+    >
       <div className="desktop-watermark">
-        <h1>WebOS — Phase 1</h1>
-        <p>Window Manager MVP: drag, resize, minimize, maximize, close.</p>
+        <h1>WebOS — Phase 1 Shell</h1>
+        <p>{activeWorkspace.name} · Taskbar, launcher, desktop, workspaces, and PWA shell are wired.</p>
       </div>
 
+      <aside className="desktop-icons" aria-label="Desktop icons">
+        {DESKTOP_ICON_APPS.map((appId) => {
+          const appDefinition = APP_DEFINITIONS.find((candidate) => candidate.id === appId)
+
+          if (!appDefinition) {
+            return null
+          }
+
+          return (
+            <button
+              key={appDefinition.id}
+              type="button"
+              className="desktop-icon"
+              onDoubleClick={() => launchFromDesktopIcon(appDefinition.id)}
+              title="Double-click to open"
+            >
+              <span className="desktop-icon-glyph" aria-hidden="true">
+                {appDefinition.icon}
+              </span>
+              <span className="desktop-icon-label">{appDefinition.title}</span>
+            </button>
+          )
+        })}
+      </aside>
+
       {visibleWindows.map((windowData) => (
-        <WindowFrame key={windowData.id} windowData={windowData} desktopBounds={desktopBounds} />
+        <WindowFrame key={windowData.id} windowData={windowData} desktopBounds={windowBounds} />
       ))}
 
       {windows.length === 0 && (
         <div className="empty-state">
-          <h2>No open windows</h2>
-          <p>Window controls are working. Next task can wire these into a taskbar launcher.</p>
+          <h2>No apps are open</h2>
+          <p>Open apps from Start, desktop icons, or dock shortcuts.</p>
         </div>
       )}
 
-      {minimizedWindows.length > 0 && (
-        <div className="window-shelf" aria-label="Minimized windows">
-          {minimizedWindows.map((windowData) => (
+      {launcherOpen && (
+        <section className="launcher-panel" aria-label="Start menu">
+          <header>
+            <h2>App Launcher</h2>
+            <input
+              value={launcherQuery}
+              onChange={(event) => setLauncherQuery(event.target.value)}
+              placeholder="Search apps"
+              aria-label="Search applications"
+              autoFocus
+            />
+          </header>
+
+          <div className="launcher-results">
+            {Object.keys(groupedLauncherApps).length === 0 && (
+              <p className="no-results">No matching apps for “{launcherQuery.trim()}”.</p>
+            )}
+
+            {(['System', 'Productivity', 'Utilities'] as const).map((categoryName) => {
+              const appDefinitions = groupedLauncherApps[categoryName]
+
+              if (!appDefinitions?.length) {
+                return null
+              }
+
+              return (
+                <section key={categoryName} className="launcher-category">
+                  <h3>{categoryName}</h3>
+                  <div className="launcher-grid">
+                    {appDefinitions.map((appDefinition) => (
+                      <button
+                        key={appDefinition.id}
+                        type="button"
+                        className="launcher-item"
+                        onClick={() => launchFromLauncher(appDefinition.id)}
+                      >
+                        <span className="launcher-item-icon" aria-hidden="true">
+                          {appDefinition.icon}
+                        </span>
+                        <span className="launcher-item-title">{appDefinition.title}</span>
+                        <span className="launcher-item-description">{appDefinition.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {contextMenu && (
+        <div
+          className="desktop-context-menu"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          role="menu"
+          aria-label="Desktop context menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setLauncherOpen(true)
+              setContextMenu(null)
+            }}
+          >
+            Open Start Menu
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              openApp('notes', windowBounds)
+              setContextMenu(null)
+            }}
+          >
+            New Quick Note
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              cycleWallpaper()
+              setContextMenu(null)
+            }}
+          >
+            Next Wallpaper
+          </button>
+          <hr />
+          {workspaces.map((workspace) => (
             <button
+              key={workspace.id}
               type="button"
-              key={windowData.id}
-              className="shelf-item"
-              onClick={() => restoreWindow(windowData.id)}
+              role="menuitemradio"
+              aria-checked={workspace.id === activeWorkspaceId}
+              onClick={() => {
+                switchWorkspace(workspace.id)
+                setContextMenu(null)
+              }}
             >
-              Restore: {windowData.title}
+              {workspace.id === activeWorkspaceId ? '✓ ' : ''}
+              Switch to {workspace.name}
             </button>
           ))}
         </div>
       )}
+
+      <footer className="taskbar">
+        <div className="taskbar-left">
+          <button
+            type="button"
+            className={`start-button ${launcherOpen ? 'is-open' : ''}`}
+            onClick={() => {
+              setLauncherOpen((isOpen) => !isOpen)
+              setContextMenu(null)
+            }}
+          >
+            ⊞ Start
+          </button>
+
+          <div className="workspace-switcher" aria-label="Workspaces">
+            {workspaces.map((workspace) => (
+              <button
+                key={workspace.id}
+                type="button"
+                className={workspace.id === activeWorkspaceId ? 'is-active' : ''}
+                onClick={() => {
+                  switchWorkspace(workspace.id)
+                  setContextMenu(null)
+                }}
+              >
+                {workspace.name.split(' ')[1] ?? workspace.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <nav className="dock" aria-label="Taskbar dock">
+          {dockAppIds.map((appId) => {
+            const appDefinition = APP_DEFINITIONS.find((candidate) => candidate.id === appId)
+
+            if (!appDefinition) {
+              return null
+            }
+
+            const appWindows = [...runningWindowsByApp[appId]].sort(
+              (first, second) => second.zIndex - first.zIndex,
+            )
+            const isRunning = appWindows.length > 0
+            const isPinned = pinnedAppIds.includes(appId)
+
+            return (
+              <div
+                className="dock-item-wrapper"
+                key={appId}
+                onMouseEnter={() => setHoveredDockAppId(appId)}
+                onMouseLeave={() => setHoveredDockAppId((current) => (current === appId ? null : current))}
+              >
+                <button
+                  type="button"
+                  className={`dock-item ${isRunning ? 'is-running' : ''}`}
+                  onClick={() => launchOrFocusApp(appId, windowBounds)}
+                  title={appDefinition.title}
+                >
+                  <span className="dock-item-icon" aria-hidden="true">
+                    {appDefinition.icon}
+                  </span>
+                  <span className="dock-item-label">{appDefinition.title}</span>
+                  {isRunning && <span className="running-indicator" aria-hidden="true" />}
+                  {!isPinned && isRunning && (
+                    <span className="running-count" aria-label={`${appWindows.length} running windows`}>
+                      {appWindows.length}
+                    </span>
+                  )}
+                </button>
+
+                {hoveredDockAppId === appId && isRunning && (
+                  <div className="thumbnail-popover" role="dialog" aria-label={`${appDefinition.title} windows`}>
+                    {appWindows.map((windowData) => (
+                      <button
+                        type="button"
+                        key={windowData.id}
+                        className="thumbnail-item"
+                        onClick={() => {
+                          if (windowData.minimized) {
+                            restoreWindow(windowData.id)
+                          } else {
+                            focusWindow(windowData.id)
+                          }
+                          setHoveredDockAppId(null)
+                        }}
+                      >
+                        <strong>{windowData.title}</strong>
+                        <span>{windowData.minimized ? 'Minimized' : 'Open'}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </nav>
+
+        <div className="taskbar-clock" aria-label="Current time">
+          {clockLabel}
+        </div>
+      </footer>
     </main>
   )
 }
@@ -227,11 +630,12 @@ function renderWindowBody(app: AppWindow['app']) {
   if (app === 'welcome') {
     return (
       <div className="window-content">
-        <h2>Desktop shell started ✅</h2>
+        <h2>Desktop shell is live ✅</h2>
         <ul>
-          <li>Drag any window from the title bar.</li>
-          <li>Resize from the lower-right corner.</li>
-          <li>Use window controls for minimize, maximize/restore, and close.</li>
+          <li>Drag, resize, minimize, maximize, and close windows.</li>
+          <li>Use the Start menu to search and launch apps by category.</li>
+          <li>Switch virtual workspaces from the taskbar or desktop right-click menu.</li>
+          <li>Hover dock items to view running-window thumbnails.</li>
         </ul>
       </div>
     )
@@ -241,21 +645,34 @@ function renderWindowBody(app: AppWindow['app']) {
     return (
       <div className="window-content">
         <h2>Quick Notes</h2>
-        <p>
-          This is a placeholder app window. In Phase 2 this can evolve into a full text editor.
-        </p>
+        <p>Placeholder app for typing rough notes while validating window behavior.</p>
         <textarea
-          defaultValue={`- MVP window manager is in place\n- Next task: taskbar / dock\n- Then app launcher`}
+          defaultValue={`- Phase 1 taskbar/dock complete\n- App launcher + categories complete\n- Desktop icons + context menu complete\n- Multi-workspace complete\n- PWA shell wired`}
           aria-label="Quick notes"
         />
       </div>
     )
   }
 
+  if (app === 'settings') {
+    return (
+      <div className="window-content">
+        <h2>Settings (Phase 1)</h2>
+        <p>
+          Wallpaper and workspace controls are currently available from the desktop right-click menu.
+          Full settings modules are scheduled in Phase 2.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="window-content">
-      <h2>About</h2>
-      <p>Demo app window.</p>
+      <h2>About WebOS</h2>
+      <p>
+        Browser desktop shell built with React + TypeScript + Zustand. This milestone finalizes Phase
+        1 MVP experience.
+      </p>
     </div>
   )
 }

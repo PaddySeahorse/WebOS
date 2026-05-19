@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="WebOS icon">
+  <defs>
+    <linearGradient id="bg512" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f3d7a" />
+      <stop offset="100%" stop-color="#11213f" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg512)" />
+  <rect x="76" y="102" width="360" height="256" rx="38" fill="#0a1325" stroke="#8fc2ff" stroke-width="18" />
+  <rect x="102" y="126" width="308" height="38" rx="12" fill="#2f4e88" />
+  <circle cx="132" cy="145" r="10" fill="#95d3ff" />
+  <circle cx="164" cy="145" r="10" fill="#95d3ff" />
+  <circle cx="196" cy="145" r="10" fill="#95d3ff" />
+  <rect x="118" y="184" width="132" height="138" rx="18" fill="#1f3157" />
+  <rect x="266" y="184" width="132" height="62" rx="18" fill="#294271" />
+  <rect x="266" y="260" width="132" height="62" rx="18" fill="#35578f" />
+  <rect x="140" y="392" width="232" height="36" rx="18" fill="#8fc2ff" />
+</svg>
