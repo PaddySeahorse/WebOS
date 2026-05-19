@@ -12,6 +12,7 @@ import {
   WALLPAPER_OPTIONS,
   useWindowManagerStore,
 } from './store/windowManagerStore'
+import { SettingsPanel } from './SettingsPanel'
 import './App.css'
 
 const MIN_DESKTOP_BOUNDS: DesktopBounds = {
@@ -42,6 +43,8 @@ function App() {
   const activeWorkspaceId = useWindowManagerStore((state) => state.activeWorkspaceId)
   const pinnedAppIds = useWindowManagerStore((state) => state.pinnedAppIds)
   const currentWallpaperId = useWindowManagerStore((state) => state.currentWallpaperId)
+  const theme = useWindowManagerStore((state) => state.theme)
+  const accentColor = useWindowManagerStore((state) => state.accentColor)
 
   const openApp = useWindowManagerStore((state) => state.openApp)
   const launchOrFocusApp = useWindowManagerStore((state) => state.launchOrFocusApp)
@@ -153,6 +156,9 @@ function App() {
         notes: [],
         about: [],
         settings: [],
+        files: [],
+        terminal: [],
+        editor: [],
       },
     )
   }, [windows])
@@ -237,7 +243,21 @@ function App() {
   return (
     <main
       className="desktop-shell"
-      style={{ background: wallpaper?.background }}
+      style={
+        {
+          background: wallpaper?.background,
+          '--accent-color': accentColor,
+          '--window-bg':
+            theme === 'dark' ? 'rgba(18, 24, 38, 0.92)' : 'rgba(240, 244, 255, 0.92)',
+          '--text-color': theme === 'dark' ? '#e8f2ff' : '#1e293b',
+          '--titlebar-bg':
+            theme === 'dark'
+              ? 'linear-gradient(180deg, rgba(48, 65, 101, 0.65), rgba(32, 45, 68, 0.8))'
+              : 'linear-gradient(180deg, rgba(200, 210, 230, 0.65), rgba(180, 190, 210, 0.8))',
+          '--border-color':
+            theme === 'dark' ? 'rgba(144, 174, 215, 0.35)' : 'rgba(100, 120, 150, 0.35)',
+        } as any
+      }
       ref={desktopRef}
       onContextMenu={handleDesktopContextMenu}
     >
@@ -655,13 +675,14 @@ function renderWindowBody(app: AppWindow['app']) {
   }
 
   if (app === 'settings') {
+    return <SettingsPanel />
+  }
+
+  if (app === 'terminal' || app === 'files' || app === 'editor') {
     return (
       <div className="window-content">
-        <h2>Settings (Phase 1)</h2>
-        <p>
-          Wallpaper and workspace controls are currently available from the desktop right-click menu.
-          Full settings modules are scheduled in Phase 2.
-        </p>
+        <h2>{app.charAt(0).toUpperCase() + app.slice(1)}</h2>
+        <p>This app is currently under development in Phase 2.</p>
       </div>
     )
   }

@@ -39,11 +39,11 @@
 - [ ] Theme support (dracula, solarized, etc.)
 
 ### Settings Panel
-- [ ] Wallpaper picker (solid colors, gradients, custom images)
-- [ ] Theme switcher (light / dark / accent color)
-- [ ] Language / locale
-- [ ] Keyboard shortcuts configuration
-- [ ] About / system info
+- [x] Wallpaper picker (solid colors, gradients, custom images)
+- [x] Theme switcher (light / dark / accent color)
+- [x] Language / locale
+- [x] Keyboard shortcuts configuration
+- [x] About / system info
 
 ### Text Editor
 - [ ] Basic code/text editing with syntax highlighting (CodeMirror / Monaco)

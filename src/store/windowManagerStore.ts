@@ -12,7 +12,7 @@ export interface Rect {
   height: number
 }
 
-export type AppId = 'welcome' | 'notes' | 'about' | 'settings'
+export type AppId = 'welcome' | 'notes' | 'about' | 'settings' | 'files' | 'terminal' | 'editor'
 export type AppCategory = 'System' | 'Productivity' | 'Utilities'
 
 export interface AppDefinition {
@@ -49,11 +49,20 @@ export interface WallpaperOption {
   background: string
 }
 
+export interface Shortcut {
+  key: string
+  label: string
+  description: string
+}
+
 interface WindowManagerState {
   workspaces: Workspace[]
   activeWorkspaceId: string
   pinnedAppIds: AppId[]
   currentWallpaperId: string
+  theme: 'light' | 'dark'
+  accentColor: string
+  language: string
   windowSeed: number
   openApp: (appId: AppId, bounds: DesktopBounds) => void
   launchOrFocusApp: (appId: AppId, bounds: DesktopBounds) => void
@@ -66,6 +75,9 @@ interface WindowManagerState {
   closeWindow: (id: string) => void
   switchWorkspace: (id: string) => void
   setWallpaper: (wallpaperId: string) => void
+  setTheme: (theme: 'light' | 'dark') => void
+  setAccentColor: (color: string) => void
+  setLanguage: (lang: string) => void
 }
 
 const MIN_WINDOW_WIDTH = 260
@@ -208,6 +220,9 @@ export const useWindowManagerStore = create<WindowManagerState>((set, get) => ({
   activeWorkspaceId: WORKSPACE_PRESETS[0].id,
   pinnedAppIds: ['welcome', 'notes', 'about', 'settings'],
   currentWallpaperId: WALLPAPER_OPTIONS[0].id,
+  theme: 'dark',
+  accentColor: '#3b82f6',
+  language: 'en-US',
   windowSeed: 2,
 
   openApp: (appId, bounds) => {
@@ -474,4 +489,8 @@ export const useWindowManagerStore = create<WindowManagerState>((set, get) => ({
       currentWallpaperId: wallpaperId,
     })
   },
+
+  setTheme: (theme) => set({ theme }),
+  setAccentColor: (accentColor) => set({ accentColor }),
+  setLanguage: (language) => set({ language }),
 }))
