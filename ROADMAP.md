@@ -25,32 +25,62 @@
 
 **Goal:** Essential built-in apps that make the desktop usable day-to-day.
 
-### File Manager
-- [ ] Tree view + breadcrumb navigation
-- [ ] Create, rename, delete, move files/folders
-- [ ] Grid / list view toggles
-- [ ] Drag-and-drop between folders
-- [ ] Backend: Origin Private File System (OPFS) + IndexedDB for metadata
+> **Dependency chain:** VFS → [Terminal file commands, File Manager, Text Editor open/save]
+> Settings Panel is independent and already complete ✅.
 
-### Terminal
-- [ ] xterm.js integration with Web Worker backend
-- [ ] Built-in command set (`ls`, `cd`, `cat`, `mkdir`, `rm`, `echo`, `clear`, `help`)
-- [ ] Tab support (multiple terminal sessions)
-- [ ] Theme support (dracula, solarized, etc.)
+### Virtual File System (VFS) — Service Layer
 
-### Settings Panel
+> **Storage strategy: OPFS (file content) + IndexedDB (directory tree & metadata).**
+> All file data lives client-side in the browser — no backend required.
+> Future: Cloud sync via CF R2 will be a pluggable adapter (Phase 3/4 stretch goal).
+
+- [x] OPFS + IndexedDB backend design (directory tree, metadata schema, file CRUD)
+- [x] Read-only access to system root `/`, write area under `~/webos-user/`
+- [x] Directory tree serialization / deserialization
+- [x] File read/write/delete/move/copy APIs
+- [x] File type detection and metadata indexing
+- [ ] — Interface abstracted for future R2 adapter swap (no action item, design intent)
+
+### Settings Panel ✅
+
 - [x] Wallpaper picker (solid colors, gradients, custom images)
 - [x] Theme switcher (light / dark / accent color)
 - [x] Language / locale
 - [x] Keyboard shortcuts configuration
 - [x] About / system info
 
-### Text Editor
-- [ ] Basic code/text editing with syntax highlighting (CodeMirror / Monaco)
-- [ ] File open/save via File Manager integration
-- [ ] Multiple tabs
+---
 
-**Deliverable:** A usable daily-driver desktop with 4+ functional apps.
+The remaining three apps can be bootstrapped in parallel during VFS development
+(UI scaffolding, terminal shell, editor shell), then wired to VFS once the service layer is ready.
+
+### Terminal
+
+> **Depends on VFS for file commands like `ls`, `cd`, `cat`, `mkdir`, `rm`.**
+
+- [ ] **Phase 2a (parallel with VFS):** xterm.js integration with Web Worker backend
+- [ ] Tab support (multiple terminal sessions)
+- [ ] Theme support (dracula, solarized, etc.)
+- [ ] **Phase 2b (after VFS):** Built-in command set wired to VFS (`ls`, `cd`, `cat`, `mkdir`, `rm`, `echo`, `clear`, `help`)
+
+### File Manager
+
+> **Depends on VFS for all storage operations. Pure UI layer.**
+
+- [ ] **Phase 2a (parallel with VFS):** UI scaffolding — tree view, breadcrumb, grid/list toggles, drag-and-drop shell
+- [x] **Phase 2b (after VFS):** Wire CRUD operations to VFS (create, rename, delete, move files/folders)
+
+### Text Editor
+
+> **Depends on VFS for open/save.**
+
+- [ ] **Phase 2a (parallel with VFS):** CodeMirror / Monaco integration with syntax highlighting
+- [ ] Multiple tabs
+- [ ] **Phase 2b (after VFS):** File open/save via VFS layer
+
+---
+
+**Deliverable:** A usable daily-driver desktop with 4+ functional apps, all backed by VFS.
 
 ---
 

@@ -5,6 +5,7 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type CSSProperties,
 } from 'react'
 import type { AppDefinition, AppId, AppWindow, DesktopBounds } from './store/windowManagerStore'
 import {
@@ -13,6 +14,7 @@ import {
   useWindowManagerStore,
 } from './store/windowManagerStore'
 import { SettingsPanel } from './SettingsPanel'
+import { FileManagerApp } from './apps/FileManagerApp'
 import './App.css'
 
 const MIN_DESKTOP_BOUNDS: DesktopBounds = {
@@ -21,7 +23,7 @@ const MIN_DESKTOP_BOUNDS: DesktopBounds = {
 }
 
 const TASKBAR_HEIGHT = 58
-const DESKTOP_ICON_APPS: AppId[] = ['welcome', 'notes', 'about', 'settings']
+const DESKTOP_ICON_APPS: AppId[] = ['files', 'terminal', 'editor', 'settings']
 
 interface ContextMenuState {
   x: number
@@ -256,14 +258,14 @@ function App() {
               : 'linear-gradient(180deg, rgba(200, 210, 230, 0.65), rgba(180, 190, 210, 0.8))',
           '--border-color':
             theme === 'dark' ? 'rgba(144, 174, 215, 0.35)' : 'rgba(100, 120, 150, 0.35)',
-        } as any
+        } as CSSProperties
       }
       ref={desktopRef}
       onContextMenu={handleDesktopContextMenu}
     >
       <div className="desktop-watermark">
-        <h1>WebOS — Phase 1 Shell</h1>
-        <p>{activeWorkspace.name} · Taskbar, launcher, desktop, workspaces, and PWA shell are wired.</p>
+        <h1>WebOS — Phase 2 Core Apps</h1>
+        <p>{activeWorkspace.name} · VFS service layer is live with OPFS + IndexedDB storage.</p>
       </div>
 
       <aside className="desktop-icons" aria-label="Desktop icons">
@@ -678,11 +680,16 @@ function renderWindowBody(app: AppWindow['app']) {
     return <SettingsPanel />
   }
 
-  if (app === 'terminal' || app === 'files' || app === 'editor') {
+  if (app === 'files') {
+    return <FileManagerApp />
+  }
+
+  if (app === 'terminal' || app === 'editor') {
     return (
       <div className="window-content">
         <h2>{app.charAt(0).toUpperCase() + app.slice(1)}</h2>
         <p>This app is currently under development in Phase 2.</p>
+        <p>VFS APIs are now available for shared file access and persistence.</p>
       </div>
     )
   }
