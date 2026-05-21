@@ -25,10 +25,10 @@
 
 **Goal:** Essential built-in apps that make the desktop usable day-to-day.
 
-> **Dependency chain:** VFS → [Terminal file commands, File Manager, Text Editor open/save]
-> Settings Panel is independent and already complete ✅.
+> VFS layer is ready ✅. All three apps below build directly on VFS.
+> Settings Panel is also complete ✅.
 
-### Virtual File System (VFS) — Service Layer
+### Virtual File System (VFS) — Service Layer ✅
 
 > **Storage strategy: OPFS (file content) + IndexedDB (directory tree & metadata).**
 > All file data lives client-side in the browser — no backend required.
@@ -39,7 +39,7 @@
 - [x] Directory tree serialization / deserialization
 - [x] File read/write/delete/move/copy APIs
 - [x] File type detection and metadata indexing
-- [ ] — Interface abstracted for future R2 adapter swap (no action item, design intent)
+- [x] Interface abstracted for future R2 adapter swap (design intent)
 
 ### Settings Panel ✅
 
@@ -51,32 +51,28 @@
 
 ---
 
-The remaining three apps can be bootstrapped in parallel during VFS development
-(UI scaffolding, terminal shell, editor shell), then wired to VFS once the service layer is ready.
+All three remaining apps can be built in parallel now — VFS is ready.
 
 ### Terminal
 
-> **Depends on VFS for file commands like `ls`, `cd`, `cat`, `mkdir`, `rm`.**
-
-- [ ] **Phase 2a (parallel with VFS):** xterm.js integration with Web Worker backend
+- [ ] xterm.js integration with Web Worker backend
+- [ ] Built-in command set wired to VFS (`ls`, `cd`, `cat`, `mkdir`, `rm`, `echo`, `clear`, `help`)
 - [ ] Tab support (multiple terminal sessions)
 - [ ] Theme support (dracula, solarized, etc.)
-- [ ] **Phase 2b (after VFS):** Built-in command set wired to VFS (`ls`, `cd`, `cat`, `mkdir`, `rm`, `echo`, `clear`, `help`)
 
-### File Manager
+### File Manager ✅
 
-> **Depends on VFS for all storage operations. Pure UI layer.**
-
-- [ ] **Phase 2a (parallel with VFS):** UI scaffolding — tree view, breadcrumb, grid/list toggles, drag-and-drop shell
-- [x] **Phase 2b (after VFS):** Wire CRUD operations to VFS (create, rename, delete, move files/folders)
+- [x] Breadcrumb navigation (up, path display, double-click into directories)
+- [x] Tree view (lazy loading subtrees when nodes expand)
+- [x] Create, rename, delete, move / copy files and folders via VFS
+- [x] Grid / list view toggles
+- [x] Drag-and-drop between folders
 
 ### Text Editor
 
-> **Depends on VFS for open/save.**
-
-- [ ] **Phase 2a (parallel with VFS):** CodeMirror / Monaco integration with syntax highlighting
+- [ ] CodeMirror / Monaco integration with syntax highlighting
 - [ ] Multiple tabs
-- [ ] **Phase 2b (after VFS):** File open/save via VFS layer
+- [ ] File open/save via VFS layer
 
 ---
 

@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { USER_HOME_PATH, VfsError, type VfsNode, vfs } from '../vfs'
+import { FileTree } from './FileManager/FileTree'
+import { FileListView } from './FileManager/FileListView'
+import { FileGridView } from './FileManager/FileGridView'
 
 const truncate = (value: string, limit = 60) =>
   value.length > limit ? `${value.slice(0, limit - 1)}…` : value
@@ -16,6 +19,8 @@ const toErrorMessage = (error: unknown) => {
   return 'Unexpected VFS error.'
 }
 
+type ViewMode = 'list' | 'grid'
+
 export function FileManagerApp() {
   const [activePath, setActivePath] = useState(USER_HOME_PATH)
   const [entries, setEntries] = useState<VfsNode[]>([])
@@ -24,11 +29,8 @@ export function FileManagerApp() {
   const [adapterLabel, setAdapterLabel] = useState('')
   const [status, setStatus] = useState('Initializing VFS…')
   const [busy, setBusy] = useState(false)
-
-  const selectedEntry = useMemo(
-    () => entries.find((entry) => entry.path === selectedPath) ?? null,
-    [entries, selectedPath],
-  )
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [showTree, setShowTree] = useState(true)
 
   const refreshDirectory = async (pathOverride?: string) => {
     const path = pathOverride ?? activePath
@@ -42,8 +44,15 @@ export function FileManagerApp() {
       setStatus(`Loaded ${path}`)
 
       if (selectedPath && !nextEntries.some((entry) => entry.path === selectedPath)) {
-        setSelectedPath(null)
-        setSelectedFilePreview('')
+        // If the selected path is not in the new entries, we don't necessarily want to clear it
+        // because it might be selected in the tree but not in the current folder view.
+        // However, if we were in a folder and it got deleted, we should clear it.
+        // For now, let's keep it if it still exists.
+        const stillExists = await vfs.stat(selectedPath);
+        if (!stillExists) {
+            setSelectedPath(null)
+            setSelectedFilePreview('')
+        }
       }
     } catch (error) {
       setStatus(toErrorMessage(error))
@@ -59,17 +68,34 @@ export function FileManagerApp() {
   }, [activePath])
 
   useEffect(() => {
-    if (!selectedEntry || selectedEntry.type !== 'file') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedFilePreview('')
-      return
-    }
+    const handleVfsChanged = () => {
+        void refreshDirectory();
+    };
 
+    window.addEventListener('vfs-changed', handleVfsChanged);
+    return () => window.removeEventListener('vfs-changed', handleVfsChanged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePath]);
+
+  useEffect(() => {
     let cancelled = false
 
-    const loadPreview = async () => {
+    const loadEntryAndPreview = async () => {
+      if (!selectedPath) {
+        setSelectedFilePreview('')
+        return
+      }
+
       try {
-        const content = await vfs.readFile(selectedEntry.path)
+        const node = await vfs.stat(selectedPath)
+        if (cancelled) return
+
+        if (!node || node.type !== 'file') {
+          setSelectedFilePreview('')
+          return
+        }
+
+        const content = await vfs.readFile(node.path)
 
         if (!cancelled) {
           setSelectedFilePreview(typeof content === 'string' ? content : '[binary content]')
@@ -81,12 +107,12 @@ export function FileManagerApp() {
       }
     }
 
-    void loadPreview()
+    void loadEntryAndPreview()
 
     return () => {
       cancelled = true
     }
-  }, [selectedEntry])
+  }, [selectedPath])
 
   const navigateTo = (path: string) => {
     setActivePath(path)
@@ -140,11 +166,11 @@ export function FileManagerApp() {
   }
 
   const deleteSelected = async () => {
-    if (!selectedEntry) {
+    if (!selectedPath) {
       return
     }
 
-    const confirmed = window.confirm(`Delete ${selectedEntry.path}?`)
+    const confirmed = window.confirm(`Delete ${selectedPath}?`)
 
     if (!confirmed) {
       return
@@ -152,10 +178,11 @@ export function FileManagerApp() {
 
     try {
       setBusy(true)
-      await vfs.delete(selectedEntry.path, { recursive: selectedEntry.type === 'directory' })
+      const node = await vfs.stat(selectedPath);
+      await vfs.delete(selectedPath, { recursive: node?.type === 'directory' })
       setSelectedPath(null)
       setSelectedFilePreview('')
-      setStatus(`Deleted: ${selectedEntry.name}`)
+      setStatus(`Deleted: ${selectedPath}`)
       await refreshDirectory()
     } catch (error) {
       setStatus(toErrorMessage(error))
@@ -164,21 +191,25 @@ export function FileManagerApp() {
   }
 
   const renameSelected = async () => {
-    if (!selectedEntry) {
+    if (!selectedPath) {
       return
     }
 
-    const nextName = window.prompt('Rename to', selectedEntry.name)?.trim()
+    const node = await vfs.stat(selectedPath);
+    if (!node) return;
 
-    if (!nextName || nextName === selectedEntry.name) {
+    const nextName = window.prompt('Rename to', node.name)?.trim()
+
+    if (!nextName || nextName === node.name) {
       return
     }
 
-    const targetPath = `${activePath}/${nextName}`
+    const parentDir = selectedPath.split('/').slice(0, -1).join('/') || '/'
+    const targetPath = `${parentDir}/${nextName}`
 
     try {
       setBusy(true)
-      await vfs.move(selectedEntry.path, targetPath)
+      await vfs.move(selectedPath, targetPath)
       setSelectedPath(targetPath)
       setStatus(`Renamed to: ${nextName}`)
       await refreshDirectory()
@@ -189,14 +220,17 @@ export function FileManagerApp() {
   }
 
   const duplicateSelected = async () => {
-    if (!selectedEntry) {
+    if (!selectedPath) {
       return
     }
 
+    const node = await vfs.stat(selectedPath);
+    if (!node) return;
+
     const suggestedName =
-      selectedEntry.type === 'directory'
-        ? `${selectedEntry.name}-copy`
-        : selectedEntry.name.replace(/(\.[^.]*)?$/, '-copy$1')
+      node.type === 'directory'
+        ? `${node.name}-copy`
+        : node.name.replace(/(\.[^.]*)?$/, '-copy$1')
 
     const nextName = window.prompt('Copy as', suggestedName)?.trim()
 
@@ -204,9 +238,11 @@ export function FileManagerApp() {
       return
     }
 
+    const parentDir = selectedPath.split('/').slice(0, -1).join('/') || '/'
+
     try {
       setBusy(true)
-      await vfs.copy(selectedEntry.path, `${activePath}/${nextName}`)
+      await vfs.copy(selectedPath, `${parentDir}/${nextName}`)
       setStatus(`Copied as: ${nextName}`)
       await refreshDirectory()
     } catch (error) {
@@ -253,21 +289,29 @@ export function FileManagerApp() {
         <button type="button" onClick={navigateUp} disabled={busy || activePath === '/'}>
           ⬆ Up
         </button>
+        <button type="button" onClick={() => setShowTree(!showTree)}>
+          {showTree ? 'Hide Tree' : 'Show Tree'}
+        </button>
+        <button type="button" onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}>
+          {viewMode === 'list' ? 'Grid View' : 'List View'}
+        </button>
+        <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
         <button type="button" onClick={createFolder} disabled={busy}>
           New Folder
         </button>
         <button type="button" onClick={createTextFile} disabled={busy}>
           New File
         </button>
-        <button type="button" onClick={renameSelected} disabled={busy || !selectedEntry}>
+        <button type="button" onClick={renameSelected} disabled={busy || !selectedPath}>
           Rename
         </button>
-        <button type="button" onClick={duplicateSelected} disabled={busy || !selectedEntry}>
+        <button type="button" onClick={duplicateSelected} disabled={busy || !selectedPath}>
           Copy
         </button>
-        <button type="button" onClick={deleteSelected} disabled={busy || !selectedEntry}>
+        <button type="button" onClick={deleteSelected} disabled={busy || !selectedPath}>
           Delete
         </button>
+        <div style={{ flex: 1 }} />
         <button type="button" onClick={exportSnapshot} disabled={busy}>
           Export
         </button>
@@ -281,49 +325,46 @@ export function FileManagerApp() {
         <span>Adapter: {adapterLabel || 'pending'}</span>
       </p>
 
-      <div className="file-manager-layout">
-        <aside className="file-manager-list" aria-label="Directory listing">
-          {entries.map((entry) => (
-            <button
-              key={entry.path}
-              type="button"
-              className={`entry-row ${selectedPath === entry.path ? 'selected' : ''}`}
-              onClick={() => setSelectedPath(entry.path)}
-              onDoubleClick={() => {
-                if (entry.type === 'directory') {
-                  navigateTo(entry.path)
-                }
-              }}
-            >
-              <span className="entry-label">
-                {entry.type === 'directory' ? '📁' : '📄'} {entry.name}
-              </span>
-              <span className="entry-meta">{entry.writable ? 'rw' : 'ro'}</span>
-            </button>
-          ))}
+      <div className={`file-manager-layout ${showTree ? 'with-tree' : ''}`}>
+        {showTree && (
+          <aside className="file-manager-sidebar">
+            <FileTree 
+              onSelect={(path) => {
+                setSelectedPath(path);
+                vfs.stat(path).then(node => {
+                  if (node?.type === 'directory') {
+                    navigateTo(path);
+                  }
+                });
+              }} 
+              selectedPath={selectedPath} 
+            />
+          </aside>
+        )}
 
-          {entries.length === 0 && <p className="empty-list">No files in this folder.</p>}
-        </aside>
+        <main className="file-manager-list">
+          {viewMode === 'list' ? (
+            <FileListView 
+              entries={entries} 
+              selectedPath={selectedPath} 
+              onSelect={setSelectedPath} 
+              onNavigate={navigateTo} 
+            />
+          ) : (
+            <FileGridView 
+              entries={entries} 
+              selectedPath={selectedPath} 
+              onSelect={setSelectedPath} 
+              onNavigate={navigateTo} 
+            />
+          )}
+        </main>
 
         <section className="file-manager-preview" aria-label="Selection preview">
-          {!selectedEntry && <p>Select a file or folder to inspect metadata.</p>}
+          {!selectedPath && <p>Select a file or folder to inspect metadata.</p>}
 
-          {selectedEntry && (
-            <>
-              <h3>{selectedEntry.name}</h3>
-              <ul>
-                <li>Path: {truncate(selectedEntry.path)}</li>
-                <li>Type: {selectedEntry.type}</li>
-                <li>Writable: {selectedEntry.writable ? 'yes' : 'no'}</li>
-                <li>Size: {selectedEntry.size} bytes</li>
-                <li>Kind: {selectedEntry.kind ?? 'n/a'}</li>
-                <li>MIME: {selectedEntry.mimeType ?? 'n/a'}</li>
-              </ul>
-
-              {selectedEntry.type === 'file' && (
-                <textarea value={selectedFilePreview} readOnly aria-label="File preview" />
-              )}
-            </>
+          {selectedPath && (
+            <SelectionPreview path={selectedPath} previewContent={selectedFilePreview} />
           )}
         </section>
       </div>
@@ -331,4 +372,32 @@ export function FileManagerApp() {
       <footer className="file-manager-status">{status}</footer>
     </div>
   )
+}
+
+function SelectionPreview({ path, previewContent }: { path: string; previewContent: string }) {
+  const [node, setNode] = useState<VfsNode | null>(null);
+
+  useEffect(() => {
+    vfs.stat(path).then(setNode);
+  }, [path]);
+
+  if (!node) return <div>Loading metadata...</div>;
+
+  return (
+    <>
+      <h3>{node.name}</h3>
+      <ul>
+        <li>Path: {truncate(node.path)}</li>
+        <li>Type: {node.type}</li>
+        <li>Writable: {node.writable ? 'yes' : 'no'}</li>
+        <li>Size: {node.size} bytes</li>
+        <li>Kind: {node.kind ?? 'n/a'}</li>
+        <li>MIME: {node.mimeType ?? 'n/a'}</li>
+      </ul>
+
+      {node.type === 'file' && (
+        <textarea value={previewContent} readOnly aria-label="File preview" />
+      )}
+    </>
+  );
 }
