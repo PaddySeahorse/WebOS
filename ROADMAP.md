@@ -68,11 +68,11 @@ All three remaining apps can be built in parallel now — VFS is ready.
 - [x] Grid / list view toggles
 - [x] Drag-and-drop between folders
 
-### Text Editor
+### Text Editor ✅
 
-- [ ] CodeMirror / Monaco integration with syntax highlighting
-- [ ] Multiple tabs
-- [ ] File open/save via VFS layer
+- [x] CodeMirror / Monaco integration with syntax highlighting
+- [x] Multiple tabs
+- [x] File open/save via VFS layer
 
 ---
 

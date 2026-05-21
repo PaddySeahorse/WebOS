@@ -15,6 +15,7 @@ import {
 } from './store/windowManagerStore'
 import { SettingsPanel } from './SettingsPanel'
 import { FileManagerApp } from './apps/FileManagerApp'
+import { TextEditorApp } from './apps/TextEditorApp'
 import './App.css'
 
 const MIN_DESKTOP_BOUNDS: DesktopBounds = {
@@ -684,10 +685,14 @@ function renderWindowBody(app: AppWindow['app']) {
     return <FileManagerApp />
   }
 
-  if (app === 'terminal' || app === 'editor') {
+  if (app === 'editor') {
+    return <TextEditorApp />
+  }
+
+  if (app === 'terminal') {
     return (
       <div className="window-content">
-        <h2>{app.charAt(0).toUpperCase() + app.slice(1)}</h2>
+        <h2>Terminal</h2>
         <p>This app is currently under development in Phase 2.</p>
         <p>VFS APIs are now available for shared file access and persistence.</p>
       </div>
