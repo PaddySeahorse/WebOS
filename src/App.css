@@ -946,3 +946,133 @@ kbd {
   overflow: auto;
   background: rgba(13, 20, 34, 0.45);
 }
+
+/* Terminal */
+.terminal-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 8px;
+}
+
+.terminal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.terminal-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.terminal-tab {
+  border: 1px solid rgba(163, 193, 237, 0.28);
+  background: rgba(31, 46, 71, 0.6);
+  color: var(--text-color);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.terminal-tab:hover {
+  background: rgba(52, 75, 114, 0.72);
+}
+
+.terminal-tab.is-active {
+  border-color: color-mix(in srgb, var(--accent-color) 60%, #ffffff 40%);
+  background: rgba(72, 103, 156, 0.78);
+}
+
+.terminal-tab-add {
+  border-style: dashed;
+}
+
+.terminal-tab-close {
+  opacity: 0.75;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.terminal-tab-close:hover {
+  opacity: 1;
+}
+
+.terminal-theme-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+}
+
+.terminal-theme-select select {
+  border: 1px solid rgba(163, 193, 237, 0.35);
+  border-radius: 8px;
+  background: rgba(10, 16, 28, 0.75);
+  color: var(--text-color);
+  padding: 4px 8px;
+  font: inherit;
+}
+
+.terminal-panels {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid rgba(157, 189, 232, 0.28);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(7, 12, 21, 0.85);
+}
+
+.terminal-panel {
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.terminal-panel.is-active {
+  display: block;
+}
+
+.terminal-screen {
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.terminal-screen .xterm {
+  height: 100%;
+}
+
+.terminal-empty-state {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  height: 100%;
+  gap: 8px;
+  color: rgba(223, 237, 255, 0.82);
+  font-size: 0.82rem;
+}
+
+.terminal-empty-state button {
+  border: 1px solid rgba(163, 193, 237, 0.35);
+  border-radius: 8px;
+  background: rgba(37, 53, 80, 0.68);
+  color: #eef7ff;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  cursor: pointer;
+}

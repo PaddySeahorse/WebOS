@@ -53,12 +53,12 @@
 
 All three remaining apps can be built in parallel now — VFS is ready.
 
-### Terminal
+### Terminal ✅
 
-- [ ] xterm.js integration with Web Worker backend
-- [ ] Built-in command set wired to VFS (`ls`, `cd`, `cat`, `mkdir`, `rm`, `echo`, `clear`, `help`)
-- [ ] Tab support (multiple terminal sessions)
-- [ ] Theme support (dracula, solarized, etc.)
+- [x] xterm.js integration with Web Worker backend
+- [x] Built-in command set wired to VFS (`ls`, `cd`, `cat`, `mkdir`, `rm`, `echo`, `clear`, `help`)
+- [x] Tab support (multiple terminal sessions)
+- [x] Theme support (dracula, solarized, etc.)
 
 ### File Manager ✅
 

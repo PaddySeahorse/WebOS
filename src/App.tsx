@@ -16,6 +16,7 @@ import {
 import { SettingsPanel } from './SettingsPanel'
 import { FileManagerApp } from './apps/FileManagerApp'
 import { TextEditorApp } from './apps/TextEditorApp'
+import { TerminalApp } from './apps/TerminalApp'
 import './App.css'
 
 const MIN_DESKTOP_BOUNDS: DesktopBounds = {
@@ -690,13 +691,7 @@ function renderWindowBody(app: AppWindow['app']) {
   }
 
   if (app === 'terminal') {
-    return (
-      <div className="window-content">
-        <h2>Terminal</h2>
-        <p>This app is currently under development in Phase 2.</p>
-        <p>VFS APIs are now available for shared file access and persistence.</p>
-      </div>
-    )
+    return <TerminalApp />
   }
 
   return (
