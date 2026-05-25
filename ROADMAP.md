@@ -80,6 +80,49 @@ All three remaining apps can be built in parallel now — VFS is ready.
 
 ---
 
+## Phase 2.1 — Mobile Adaptation 📱
+
+**Goal:** Adapt the desktop shell and core apps for mobile & tablet use.
+
+> Responsive re-architecture, PWA enhancements, and touch-friendly UI for a seamless
+> desktop-to-mobile experience.
+
+### Responsive Desktop Shell ✅
+
+- [x] **Mobile Layout Engine** — responsive shell that adapts to every viewport width (320px–1024px)
+- [x] **Touch-friendly Taskbar** — larger hit targets (≥44px), bottom-docked, adaptive width
+- [x] **Compact Window Manager** — optimized titlebar, larger resize handles, maximized mode on narrow screens
+- [x] **Adaptive Start Menu** — full-screen drawer on mobile, slide-up panel
+- [x] **Orientation Handling** — landscape / portrait layout switching with state preservation
+- [x] **Virtual Keyboard Aware** — windows auto-resize when on-screen keyboard appears
+
+### Touch-Optimized Core Apps
+
+- [ ] **File Manager Mobile** — responsive layout (tree/columns collapse to single list on narrow screens), touch-friendly file actions
+- [ ] **Terminal Mobile** — larger fonts, pinch-zoom, optimized toolbar for touch
+- [ ] **Text Editor Mobile** — floating toolbar on selection, auto-save on focus loss, responsive tab bar
+- [ ] **Settings Mobile** — collapsible sections, wider touch targets, sidebar collapses to top tabs
+
+### Mobile PWA Enhancements
+
+- [ ] **Standalone Mode Polish** — splash screen, status bar color (theme-color), safe-area insets (`env(safe-area-inset-*)`)
+- [ ] **Share Target API** — receive files/links from other apps into WebOS VFS
+- [ ] **File Handling API** — register WebOS as a file handler for supported types
+- [ ] **Background Sync** — sync VFS changes when connectivity resumes
+- [ ] **Biometric Lock Screen** — Touch ID / Face ID via WebAuthn
+
+### Mobile-Specific Features
+
+- [ ] **Quick Settings Panel** — swipe-down control center (WiFi indicator, brightness, rotation lock)
+- [ ] **App Drawer** — iOS/Android-style home screen with icon grid
+- [ ] **Picture-in-Picture** — float video / terminal over other apps
+- [ ] **Split Screen** — run two apps side-by-side on tablets
+
+**Deliverable:** A single PWA that feels native on both desktop and mobile, with responsive
+layouts and touch-optimized core apps.
+
+---
+
 ## Phase 3 — Advanced Platform Features
 
 **Goal:** Turn the desktop into a real platform.
@@ -126,7 +169,6 @@ All three remaining apps can be built in parallel now — VFS is ready.
 
 - [ ] **Collaborative Desktop** — WebRTC-based shared sessions (pair programming, remote help)
 - [ ] **Cloud Sync** — optional backend to sync desktop state across devices
-- [ ] **Mobile/Tablet Layout** — responsive shell for smaller screens
 - [ ] **Docker/Container Integration** — run real Linux containers via WASM or remote API
 - [ ] **WebAssembly Runtime** — run native-compiled apps in the browser via WASM
 
@@ -157,6 +199,7 @@ All three remaining apps can be built in parallel now — VFS is ready.
 |-----------|--------|-------------|
 | M1 | Phase 1 done | Desktop boots with windows and taskbar |
 | M2 | Phase 2 done | 4 core apps functional |
+| M2.1 | Phase 2.1 done | Mobile-responsive shell & touch-optimized apps |
 | M3 | Phase 3 done | App store, notifications, lock screen |
 | M4 | Phase 4 done | SDK published, third-party app demo |
 | M5 | v1.0 | Stable, documented, public beta |

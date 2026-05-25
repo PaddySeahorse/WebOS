@@ -235,6 +235,20 @@
   font-size: 1rem;
 }
 
+.launcher-close {
+  background: none;
+  border: none;
+  color: #f0f6ff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 10px;
+  opacity: 0.8;
+}
+
+.launcher-close:hover {
+  opacity: 1;
+}
+
 .launcher-panel header input {
   width: 100%;
   border: 1px solid rgba(163, 193, 237, 0.4);
@@ -713,6 +727,80 @@ kbd {
   .dock-item {
     min-width: 46px;
     padding-bottom: 8px;
+  }
+}
+
+/* Mobile Layout Engine - Responsive Shell */
+@media (max-width: 768px) {
+  /* Touch-friendly Taskbar - larger hit targets */
+  .taskbar {
+    height: 64px;
+  }
+
+  .taskbar button,
+  .taskbar .dock-item {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Compact Window Manager */
+  .window-titlebar {
+    padding: 12px 10px;
+  }
+
+  .window-controls button {
+    width: 32px;
+    height: 30px;
+    font-size: 1.1rem;
+  }
+
+  .window-resize-handle {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Adaptive Start Menu - full-screen drawer */
+  .launcher-panel {
+    left: 0 !important;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0;
+  }
+
+  /* Mobile-specific adjustments */
+  .desktop-icons {
+    display: none;
+  }
+
+  .empty-state {
+    width: min(420px, calc(100% - 40px));
+  }
+}
+
+/* Orientation Handling */
+@media (orientation: portrait) and (max-width: 768px) {
+  .launcher-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+@media (orientation: landscape) and (max-width: 900px) {
+  .launcher-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
+/* Virtual Keyboard Aware - adjust window sizing */
+@media (max-height: 600px) {
+  .window-frame {
+    max-height: 80vh;
+  }
+
+  .launcher-panel {
+    max-height: 70vh;
   }
 }
 

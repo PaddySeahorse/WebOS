@@ -50,10 +50,24 @@ function App() {
   const theme = useWindowManagerStore((state) => state.theme)
   const accentColor = useWindowManagerStore((state) => state.accentColor)
 
+  const activeWorkspace = useMemo(
+    () =>
+      workspaces.find((workspace) => workspace.id === activeWorkspaceId) ??
+      workspaces[0] ?? {
+        id: 'workspace-fallback',
+        name: 'Workspace',
+        windows: [],
+      },
+    [workspaces, activeWorkspaceId],
+  )
+
+  const windows = activeWorkspace.windows
+
   const openApp = useWindowManagerStore((state) => state.openApp)
   const launchOrFocusApp = useWindowManagerStore((state) => state.launchOrFocusApp)
   const restoreWindow = useWindowManagerStore((state) => state.restoreWindow)
   const focusWindow = useWindowManagerStore((state) => state.focusWindow)
+  const resizeWindow = useWindowManagerStore((state) => state.resizeWindow)
   const switchWorkspace = useWindowManagerStore((state) => state.switchWorkspace)
   const setWallpaper = useWindowManagerStore((state) => state.setWallpaper)
 
@@ -83,6 +97,29 @@ function App() {
     return () => {
       observer.disconnect()
       window.removeEventListener('resize', measureDesktop)
+    }
+  }, [desktopBounds])
+
+  // Orientation Handling
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      const orientation = window.screen.orientation?.type || 'landscape-primary'
+      console.log('Orientation changed:', orientation)
+      
+      // Force re-measurement of desktop bounds on orientation change
+      if (desktopRef.current) {
+        const { width, height } = desktopRef.current.getBoundingClientRect()
+        setDesktopBounds({
+          width: Math.max(MIN_DESKTOP_BOUNDS.width, Math.floor(width)),
+          height: Math.max(MIN_DESKTOP_BOUNDS.height, Math.floor(height)),
+        })
+      }
+    }
+
+    window.addEventListener('orientationchange', handleOrientationChange)
+    
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange)
     }
   }, [])
 
@@ -120,26 +157,17 @@ function App() {
     }
   }, [launcherOpen, contextMenu])
 
-  const windowBounds = useMemo<DesktopBounds>(
-    () => ({
-      width: desktopBounds.width,
-      height: Math.max(420, desktopBounds.height - TASKBAR_HEIGHT - 10),
-    }),
-    [desktopBounds],
-  )
-
-  const activeWorkspace = useMemo(
-    () =>
-      workspaces.find((workspace) => workspace.id === activeWorkspaceId) ??
-      workspaces[0] ?? {
-        id: 'workspace-fallback',
-        name: 'Workspace',
-        windows: [],
-      },
-    [workspaces, activeWorkspaceId],
-  )
-
-  const windows = activeWorkspace.windows
+  const windowBounds = useMemo<DesktopBounds>(() => {
+    const height = Math.max(420, desktopBounds.height - TASKBAR_HEIGHT - 10)
+    
+    // Compact Window Manager: On narrow screens, maximize windows by default
+    const isNarrowScreen = desktopBounds.width <= 768
+    
+    return {
+      width: isNarrowScreen ? desktopBounds.width : desktopBounds.width,
+      height: isNarrowScreen ? Math.max(420, height) : height,
+    }
+  }, [desktopBounds])
 
   const visibleWindows = useMemo(
     () =>
@@ -309,7 +337,25 @@ function App() {
       {launcherOpen && (
         <section className="launcher-panel" aria-label="Start menu">
           <header>
-            <h2>App Launcher</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>App Launcher</h2>
+              <button
+                type="button"
+                className="launcher-close"
+                onClick={() => setLauncherOpen(false)}
+                aria-label="Close launcher"
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#f0f6ff', 
+                  fontSize: '1.5rem', 
+                  cursor: 'pointer',
+                  padding: '0 10px'
+                }}
+              >
+                ×
+              </button>
+            </div>
             <input
               value={launcherQuery}
               onChange={(event) => setLauncherQuery(event.target.value)}
