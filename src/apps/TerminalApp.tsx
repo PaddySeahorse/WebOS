@@ -196,6 +196,7 @@ export function TerminalApp() {
   )
   const [tabs, setTabs] = useState<TerminalTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string | null>(null)
+  const [terminalFontSize, setTerminalFontSize] = useState(13)
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const tabCounterRef = useRef(1)
@@ -324,7 +325,7 @@ export function TerminalApp() {
       const terminal = new Terminal({
         cursorBlink: true,
         theme: selectedTheme,
-        fontSize: 13,
+        fontSize: terminalFontSize,
         lineHeight: 1.3,
         fontFamily:
           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
@@ -563,6 +564,15 @@ export function TerminalApp() {
   }, [tabs, createRuntimeForTab])
 
   useEffect(() => {
+    for (const runtime of runtimeByTabRef.current.values()) {
+      runtime.terminal.options.fontSize = terminalFontSize
+      window.requestAnimationFrame(() => {
+        runtime.fitAddon.fit()
+      })
+    }
+  }, [terminalFontSize])
+
+  useEffect(() => {
     applyThemeToAll()
   }, [applyThemeToAll])
 
@@ -606,6 +616,12 @@ export function TerminalApp() {
     }
   }, [activeTabId])
 
+  const sendKey = (key: string) => {
+    if (activeTabId) {
+      handleTerminalInput(activeTabId, key)
+    }
+  }
+
   return (
     <div className="terminal-app" ref={rootRef}>
       <header className="terminal-toolbar">
@@ -647,17 +663,34 @@ export function TerminalApp() {
           </button>
         </div>
 
-        <label className="terminal-theme-select">
-          Theme
-          <select value={themeId} onChange={(event) => setThemeId(event.target.value as TerminalThemeId)}>
-            {TERMINAL_THEME_OPTIONS.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="terminal-controls">
+          <div className="terminal-zoom-controls">
+            <button onClick={() => setTerminalFontSize(prev => Math.max(8, prev - 1))} title="Zoom Out">-</button>
+            <span className="terminal-font-size">{terminalFontSize}px</span>
+            <button onClick={() => setTerminalFontSize(prev => Math.min(30, prev + 1))} title="Zoom In">+</button>
+          </div>
+
+          <label className="terminal-theme-select">
+            Theme
+            <select value={themeId} onChange={(event) => setThemeId(event.target.value as TerminalThemeId)}>
+              {TERMINAL_THEME_OPTIONS.map((theme) => (
+                <option key={theme.id} value={theme.id}>
+                  {theme.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
+
+      <div className="terminal-touch-bar">
+        <button onClick={() => sendKey('\u001b')}>Esc</button>
+        <button onClick={() => sendKey('\t')}>Tab</button>
+        <button onClick={() => sendKey('\u001b[A')}>↑</button>
+        <button onClick={() => sendKey('\u001b[B')}>↓</button>
+        <button onClick={() => sendKey('\u0003')}>Ctrl+C</button>
+        <button onClick={() => sendKey('\u000c')}>Clear</button>
+      </div>
 
       <div className="terminal-panels">
         {tabs.map((tab) => (

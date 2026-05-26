@@ -96,12 +96,12 @@ All three remaining apps can be built in parallel now — VFS is ready.
 - [x] **Orientation Handling** — landscape / portrait layout switching with state preservation
 - [x] **Virtual Keyboard Aware** — windows auto-resize when on-screen keyboard appears
 
-### Touch-Optimized Core Apps
+### Touch-Optimized Core Apps ✅
 
-- [ ] **File Manager Mobile** — responsive layout (tree/columns collapse to single list on narrow screens), touch-friendly file actions
-- [ ] **Terminal Mobile** — larger fonts, pinch-zoom, optimized toolbar for touch
-- [ ] **Text Editor Mobile** — floating toolbar on selection, auto-save on focus loss, responsive tab bar
-- [ ] **Settings Mobile** — collapsible sections, wider touch targets, sidebar collapses to top tabs
+- [x] **File Manager Mobile** — responsive layout (tree/columns collapse to single list on narrow screens), touch-friendly file actions
+- [x] **Terminal Mobile** — larger fonts, pinch-zoom (via controls), optimized toolbar for touch
+- [x] **Text Editor Mobile** — floating toolbar (touch bar), auto-save on focus loss, responsive tab bar
+- [x] **Settings Mobile** — collapsible sections, wider touch targets, sidebar collapses to top tabs
 
 ### Mobile PWA Enhancements
 
@@ -199,7 +199,7 @@ layouts and touch-optimized core apps.
 |-----------|--------|-------------|
 | M1 | Phase 1 done | Desktop boots with windows and taskbar |
 | M2 | Phase 2 done | 4 core apps functional |
-| M2.1 | Phase 2.1 done | Mobile-responsive shell & touch-optimized apps |
+| M2.1 | Phase 2.1 done | Mobile-responsive shell & touch-optimized apps ✅ |
 | M3 | Phase 3 done | App store, notifications, lock screen |
 | M4 | Phase 4 done | SDK published, third-party app demo |
 | M5 | v1.0 | Stable, documented, public beta |

@@ -67,7 +67,6 @@ function App() {
   const launchOrFocusApp = useWindowManagerStore((state) => state.launchOrFocusApp)
   const restoreWindow = useWindowManagerStore((state) => state.restoreWindow)
   const focusWindow = useWindowManagerStore((state) => state.focusWindow)
-  const resizeWindow = useWindowManagerStore((state) => state.resizeWindow)
   const switchWorkspace = useWindowManagerStore((state) => state.switchWorkspace)
   const setWallpaper = useWindowManagerStore((state) => state.setWallpaper)
 

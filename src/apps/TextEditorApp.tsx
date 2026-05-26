@@ -114,35 +114,32 @@ export function TextEditorApp(): ReactNode {
     }
   }, [tabs, activeTabId])
 
+  const handleBlur = () => {
+    if (activeTab?.isDirty && activeTab?.path) {
+      void saveFile()
+    }
+  }
+
   return (
-    <div className="text-editor" style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#282c34', color: 'white' }}>
-      <header className="editor-toolbar" style={{ display: 'flex', gap: '8px', padding: '8px', backgroundColor: '#21252b' }}>
-        <button type="button" onClick={newTab} style={{ background: '#3b4048', border: 'none', color: 'white', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>New Tab</button>
-        <button type="button" onClick={openFile} style={{ background: '#3b4048', border: 'none', color: 'white', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>Open</button>
-        <button type="button" onClick={saveFile} disabled={!activeTab} style={{ background: '#3b4048', border: 'none', color: 'white', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', opacity: !activeTab ? 0.5 : 1 }}>Save</button>
+    <div className="text-editor">
+      <header className="editor-toolbar">
+        <button type="button" onClick={newTab}>New Tab</button>
+        <button type="button" onClick={openFile}>Open</button>
+        <button type="button" onClick={saveFile} disabled={!activeTab} style={{ opacity: !activeTab ? 0.5 : 1 }}>Save</button>
       </header>
       
-      <nav className="editor-tabs" style={{ display: 'flex', backgroundColor: '#181a1f', overflowX: 'auto', userSelect: 'none' }}>
+      <nav className="editor-tabs">
         {tabs.map(tab => (
           <div 
             key={tab.id} 
             onClick={() => setActiveTabId(tab.id)}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: activeTabId === tab.id ? '#282c34' : 'transparent',
-              borderTop: activeTabId === tab.id ? '2px solid #61afef' : '2px solid transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              minWidth: 'max-content'
-            }}
+            className={`editor-tab ${activeTabId === tab.id ? 'active' : ''}`}
           >
             <span>{tab.name}{tab.isDirty ? ' •' : ''}</span>
             <button 
               type="button"
+              className="tab-close"
               onClick={(e) => closeTab(tab.id, e)}
-              style={{ fontSize: '12px', opacity: 0.7, padding: '2px 4px', borderRadius: '50%', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}
             >
               ✕
             </button>
@@ -150,24 +147,46 @@ export function TextEditorApp(): ReactNode {
         ))}
       </nav>
 
-      <main className="editor-content" style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <main className="editor-content">
         {activeTab ? (
-          <CodeMirror
-            value={activeTab.content}
-            height="100%"
-            theme={oneDark}
-            extensions={getLanguageExtension(activeTab.name)}
-            onChange={handleContentChange}
-            style={{ flex: 1, fontSize: '14px' }}
-          />
+          <div className="editor-wrapper">
+            <CodeMirror
+              value={activeTab.content}
+              height="100%"
+              theme={oneDark}
+              extensions={getLanguageExtension(activeTab.name)}
+              onChange={handleContentChange}
+              onBlur={handleBlur}
+              className="cm-editor-container"
+            />
+            {/* Mobile Selection Toolbar (Simulated as a permanent touch-bar for simplicity on mobile) */}
+            <div className="editor-mobile-toolbar">
+              <button title="Undo" onClick={() => document.execCommand('undo')}>↶</button>
+              <button title="Redo" onClick={() => document.execCommand('redo')}>↷</button>
+              <button title="Select All" onClick={() => {
+                const el = document.querySelector('.cm-content') as HTMLElement
+                if (el) el.focus()
+                document.execCommand('selectAll')
+              }}>∀</button>
+              <button title="Copy" onClick={() => document.execCommand('copy')}>📋</button>
+              <button title="Paste" onClick={async () => {
+                try {
+                  const text = await navigator.clipboard.readText()
+                  handleContentChange(activeTab.content + text)
+                } catch (e) {
+                  setStatus('Clipboard access denied')
+                }
+              }}>📥</button>
+            </div>
+          </div>
         ) : (
-          <div style={{ padding: '20px', color: '#abb2bf', textAlign: 'center' }}>
+          <div className="editor-empty">
             No open files
           </div>
         )}
       </main>
 
-      <footer className="editor-status" style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#21252b', borderTop: '1px solid #181a1f' }}>
+      <footer className="editor-status">
         {status}
       </footer>
     </div>

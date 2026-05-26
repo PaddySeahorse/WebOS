@@ -31,6 +31,11 @@ export function SettingsPanel() {
   const setLanguage = useWindowManagerStore((state) => state.setLanguage)
 
   const [activeTab, setActiveTab] = React.useState<'personalization' | 'system' | 'shortcuts'>('personalization')
+  const [collapsedSections, setCollapsedSections] = React.useState<Record<string, boolean>>({})
+
+  const toggleSection = (id: string) => {
+    setCollapsedSections(prev => ({ ...prev, [id]: !prev[id] }))
+  }
 
   return (
     <div className="settings-container">
@@ -57,69 +62,99 @@ export function SettingsPanel() {
 
       <div className="settings-main">
         {activeTab === 'personalization' && (
-          <section>
-            <h3>Wallpaper</h3>
-            <div className="wallpaper-grid">
-              {WALLPAPER_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  className={`wallpaper-preview ${currentWallpaperId === option.id ? 'selected' : ''}`}
-                  style={{ background: option.background }}
-                  onClick={() => setWallpaper(option.id)}
-                  title={option.name}
-                >
-                  <span>{option.name}</span>
-                </button>
-              ))}
-            </div>
+          <>
+            <section className={collapsedSections['wallpaper'] ? 'collapsed' : ''}>
+              <h3 onClick={() => toggleSection('wallpaper')}>
+                Wallpaper {collapsedSections['wallpaper'] ? '▼' : '▲'}
+              </h3>
+              {!collapsedSections['wallpaper'] && (
+                <div className="wallpaper-grid">
+                  {WALLPAPER_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`wallpaper-preview ${currentWallpaperId === option.id ? 'selected' : ''}`}
+                      style={{ background: option.background }}
+                      onClick={() => setWallpaper(option.id)}
+                      title={option.name}
+                    >
+                      <span>{option.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
 
-            <h3>Theme</h3>
-            <div className="setting-row">
-              <label>Mode</label>
-              <select value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}>
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-              </select>
-            </div>
+            <section className={collapsedSections['theme'] ? 'collapsed' : ''}>
+              <h3 onClick={() => toggleSection('theme')}>
+                Theme {collapsedSections['theme'] ? '▼' : '▲'}
+              </h3>
+              {!collapsedSections['theme'] && (
+                <div className="setting-row">
+                  <label>Mode</label>
+                  <select value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}>
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                  </select>
+                </div>
+              )}
+            </section>
 
-            <h3>Accent Color</h3>
-            <div className="color-grid">
-              {ACCENT_COLORS.map((color) => (
-                <button
-                  key={color}
-                  className={`color-swatch ${accentColor === color ? 'selected' : ''}`}
-                  style={{ backgroundColor: color }}
-                  onClick={() => setAccentColor(color)}
-                />
-              ))}
-            </div>
-          </section>
+            <section className={collapsedSections['accent'] ? 'collapsed' : ''}>
+              <h3 onClick={() => toggleSection('accent')}>
+                Accent Color {collapsedSections['accent'] ? '▼' : '▲'}
+              </h3>
+              {!collapsedSections['accent'] && (
+                <div className="color-grid">
+                  {ACCENT_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      className={`color-swatch ${accentColor === color ? 'selected' : ''}`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setAccentColor(color)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         )}
 
         {activeTab === 'system' && (
-          <section>
-            <h3>Language / Locale</h3>
-            <div className="setting-row">
-              <label>System Language</label>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                {LANGUAGES.map((lang) => (
-                  <option key={lang.id} value={lang.id}>
-                    {lang.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <>
+            <section className={collapsedSections['language'] ? 'collapsed' : ''}>
+              <h3 onClick={() => toggleSection('language')}>
+                Language / Locale {collapsedSections['language'] ? '▼' : '▲'}
+              </h3>
+              {!collapsedSections['language'] && (
+                <div className="setting-row">
+                  <label>System Language</label>
+                  <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang.id} value={lang.id}>
+                        {lang.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </section>
 
-            <h3>About WebOS</h3>
-            <div className="about-info">
-              <p><strong>Version:</strong> 0.2.0 (Phase 2)</p>
-              <p><strong>Environment:</strong> Browser Native</p>
-              <p><strong>Stack:</strong> React, TypeScript, Zustand, Tailwind</p>
-              <p>
-                A browser-based desktop environment that runs entirely in the browser — no server-side OS required.
-              </p>
-            </div>
-          </section>
+            <section className={collapsedSections['about'] ? 'collapsed' : ''}>
+              <h3 onClick={() => toggleSection('about')}>
+                About WebOS {collapsedSections['about'] ? '▼' : '▲'}
+              </h3>
+              {!collapsedSections['about'] && (
+                <div className="about-info">
+                  <p><strong>Version:</strong> 0.2.0 (Phase 2)</p>
+                  <p><strong>Environment:</strong> Browser Native</p>
+                  <p><strong>Stack:</strong> React, TypeScript, Zustand, Tailwind</p>
+                  <p>
+                    A browser-based desktop environment that runs entirely in the browser — no server-side OS required.
+                  </p>
+                </div>
+              )}
+            </section>
+          </>
         )}
 
         {activeTab === 'shortcuts' && (
